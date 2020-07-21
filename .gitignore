@@ -1,0 +1,5 @@
+.idea/
+infrastructure/certs/**
+!infrastructure/certs/.gitkeep
+infrastructure/logs/**
+!infrastructure/logs/.gitkeep

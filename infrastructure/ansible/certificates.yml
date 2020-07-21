@@ -1,0 +1,112 @@
+---
+-   name: "Generate SSE certificates with mkcert"
+    hosts: "localhost"
+    connection: "local"
+    vars:
+        CERTS_DIR: "{{ playbook_dir }}/../certs"
+        GEN_CERT_NAME: "cert.pem"
+        GEN_KEY_NAME: "key.pem"
+        GEN_CA_NAME: "ca.pem"
+        DOMAIN_NAME: "127.0.0.1 localhost sse"
+    gather_facts: "false"
+    tasks:
+        -   name: "Check if certs already generated"
+            stat:
+                path: "{{ CERTS_DIR }}/{{ GEN_CA_NAME }}"
+            register: "certs_exist_output"
+            changed_when: "not certs_exist_output.stat.exists"
+
+        -   name: "Generate certs with mkcert (docker container)"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            shell: "
+                docker run --rm -v {{ CERTS_DIR }}/:/root/.local/share/mkcert brunopadz/mkcert-docker:latest \
+                /bin/sh -c \"
+                    CAROOT=/root/.local/share/mkcert mkcert -install && \
+                    mkcert -cert-file /root/.local/share/mkcert/{{ GEN_CERT_NAME }} \
+                    -key-file /root/.local/share/mkcert/{{ GEN_KEY_NAME }} \
+                    {{ DOMAIN_NAME }}
+                \"
+            "
+
+        -   name: "Rename generated root ca"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            copy:
+                remote_src: "no"
+                src: "{{ CERTS_DIR }}/rootCA.pem"
+                dest: "{{ CERTS_DIR }}/{{ GEN_CA_NAME }}"
+
+        -   name: "Remove old root ca"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            file:
+                path: "{{ CERTS_DIR }}/rootCA.pem"
+                state: "absent"
+
+        -   name: "Remove old root ca key"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            file:
+                path: "{{ CERTS_DIR }}/rootCA-key.pem"
+                state: "absent"
+
+-   name: "Generate Postgres certificates with mkcert"
+    hosts: "localhost"
+    connection: "local"
+    vars:
+        CERTS_DIR: "{{ playbook_dir }}/../certs"
+        GEN_CERT_NAME: "postgres_cert.crt"
+        GEN_KEY_NAME: "postgres_key.key"
+        GEN_CA_NAME: "postgres_ca.crt"
+        DOMAIN_NAME: "127.0.0.1 localhost postgres"
+    gather_facts: "false"
+    tasks:
+        -   name: "Check if certs already generated"
+            stat:
+                path: "{{ CERTS_DIR }}/{{ GEN_CA_NAME }}"
+            register: "certs_exist_output"
+            changed_when: "not certs_exist_output.stat.exists"
+
+        -   name: "Generate certs with mkcert (docker container)"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            shell: "
+                docker run --rm -v {{ CERTS_DIR }}/:/root/.local/share/mkcert brunopadz/mkcert-docker:latest \
+                /bin/sh -c \"
+                    CAROOT=/root/.local/share/mkcert mkcert -install && \
+                    mkcert -cert-file /root/.local/share/mkcert/{{ GEN_CERT_NAME }} \
+                    -key-file /root/.local/share/mkcert/{{ GEN_KEY_NAME }} \
+                    {{ DOMAIN_NAME }}
+                \"
+            "
+
+        -   name: "Rename generated root ca"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            copy:
+                remote_src: "no"
+                src: "{{ CERTS_DIR }}/rootCA.pem"
+                dest: "{{ CERTS_DIR }}/{{ GEN_CA_NAME }}"
+
+        -   name: "Remove old root ca"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            file:
+                path: "{{ CERTS_DIR }}/rootCA.pem"
+                state: "absent"
+
+        -   name: "Remove old root ca key"
+            vars:
+                CERTS_EXIST: "{{ certs_exist_output.stat.exists }}"
+            when: "CERTS_EXIST is false"
+            file:
+                path: "{{ CERTS_DIR }}/rootCA-key.pem"
+                state: "absent"

@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+    sse:
+        container_name: sse
+        build:
+            context: ../../
+            dockerfile: infrastructure/docker/Dockerfile
+        networks:
+            - xpacto-net
+        ports:
+            - ${SSE_PORT}:${SSE_PORT}
+        volumes:
+            - ../certs:${SSE_CERTS_DIR}
+            - ../logs:${SSE_LOGS_DIR}
+        env_file:
+            - ../dev.env
+
+networks:
+    xpacto-net:
+        external: true
